@@ -1,0 +1,38 @@
+version: "3.8"
+
+services:
+  n8n:
+    image: n8nio/n8n
+    container_name: n8n
+    ports:
+      - "5678:5678"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=admin
+      - N8N_BASIC_AUTH_PASSWORD=admin123
+      - WEBHOOK_URL=http://localhost:5678
+    networks:
+      - bot_network
+
+  openhands:
+    image: ghcr.io/all-hands-ai/openhands:main
+    container_name: openhands
+    ports:
+      - "3000:3000"
+    volumes:
+      - openhands_data:/opt/workspace
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SANDBOX_RUNTIME_CONTAINER_IMAGE=docker.all-hands.dev/all-hands-ai/runtime:0.39-nikolaik
+    networks:
+      - bot_network
+
+volumes:
+  n8n_data:
+  openhands_data:
+
+networks:
+  bot_network:
+    driver: bridge
