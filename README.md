@@ -1,138 +1,262 @@
-# 🤖 Bot Telegram — Google Calendar
+# 🐳 Bot Generador de Entornos Docker
 
-Bot personal para gestionar tu Google Calendar desde Telegram,
-con alertas automáticas 7 días antes de cada evento.
+<div align="center">
 
----
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![n8n](https://img.shields.io/badge/n8n-EA4B71?style=for-the-badge&logo=n8n&logoColor=white)
+![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)
+![Groq](https://img.shields.io/badge/Groq-F55036?style=for-the-badge&logo=groq&logoColor=white)
+![OpenHands](https://img.shields.io/badge/OpenHands-22C55E?style=for-the-badge&logo=openai&logoColor=white)
+![Ngrok](https://img.shields.io/badge/Ngrok-1F1E37?style=for-the-badge&logo=ngrok&logoColor=white)
 
-## ⚡ Comandos disponibles
+**Bot de Telegram con IA que genera y despliega entornos Docker automáticamente a partir de descripciones en lenguaje natural.**
 
-| Comando | Acción |
-|---------|--------|
-| `/hoy` | Eventos de hoy |
-| `/semana` | Eventos de los próximos 7 días |
-| `/mes` | Eventos de los próximos 30 días |
-| `/crear` | Instrucciones para crear un evento |
-| `/borrar` | Muestra botones para borrar eventos |
-| `/editar` | Muestra botones para editar eventos |
-| `/alertas` | Lista de próximos eventos con días restantes |
+*Proyecto Final — Sistemas Informáticos · 1º DAM · IES Océano Atlántico · 2025-2026*
 
-**Crear evento** (escribir directamente):
-```
-CREAR | Título | DD/MM/YYYY HH:MM | Lugar | Descripción
-```
+*Autores: Sergio Pallarés Tejedor · Izan Asin Mazuque*
 
-**Editar evento** (tras seleccionar con /editar):
-```
-EDITAR | ID_EVENTO | título=Nuevo título, lugar=Nuevo lugar
-```
+</div>
 
 ---
 
-## 🛠 Instalación paso a paso
+## 📋 Índice
 
-### PASO 1 — Crear el bot en Telegram
-
-1. Abre Telegram y busca **@BotFather**
-2. Escríbele `/newbot`
-3. Pon un nombre y un username (ej: `MiCalendarioBot`)
-4. Guarda el **TOKEN** que te da (algo como `123456:ABCdef...`)
-
-5. Para saber tu Chat ID: busca **@userinfobot** en Telegram
-   y escríbele cualquier cosa. Te dirá tu ID numérico.
-
----
-
-### PASO 2 — Activar Google Calendar API
-
-1. Ve a [console.cloud.google.com](https://console.cloud.google.com)
-2. Crea un proyecto nuevo (ej: "Mi Bot Calendar")
-3. Ve a **APIs y servicios → Biblioteca**
-4. Busca "Google Calendar API" y actívala
-5. Ve a **APIs y servicios → Credenciales**
-6. Haz clic en **"+ Crear credenciales" → ID de cliente OAuth**
-7. Tipo de aplicación: **Aplicación de escritorio**
-8. Descarga el fichero JSON y renómbralo `credentials.json`
-
-9. Ve a **"Pantalla de consentimiento OAuth"**
-   - Tipo: **Externo**
-   - Añade tu correo de Google en "Usuarios de prueba"
+- [¿Qué es este proyecto?](#-qué-es-este-proyecto)
+- [Arquitectura del sistema](#-arquitectura-del-sistema)
+- [Tecnologías utilizadas](#-tecnologías-utilizadas)
+- [Estructura del repositorio](#-estructura-del-repositorio)
+- [Requisitos previos](#-requisitos-previos)
+- [Instrucciones de arranque](#-instrucciones-de-arranque)
+- [Uso del bot](#-uso-del-bot)
+- [Niveles del proyecto](#-niveles-del-proyecto)
+- [Capturas del sistema](#-capturas-del-sistema)
 
 ---
 
-### PASO 3 — Generar el token de acceso (en tu ordenador)
+## 🤖 ¿Qué es este proyecto?
+
+Este proyecto consiste en un **bot de Telegram inteligente** que permite generar y desplegar entornos Docker de forma completamente automática, simplemente describiendo lo que necesitas en lenguaje natural.
+
+El usuario escribe un mensaje como:
+
+> 💬 *"Quiero un entorno con Nginx y MySQL"*
+
+Y el bot responde automáticamente con un `docker-compose.yml` válido y funcional generado por inteligencia artificial.
+
+### ✨ Funcionalidades principales
+
+- 🧠 **Generación automática** de ficheros `docker-compose.yml` mediante IA (Groq + LLaMA 3.3)
+- 🚀 **Despliegue automático** de los entornos generados con OpenHands
+- 💬 **Conversación fluida** sobre Docker, contenedores, redes y volúmenes
+- 📋 **Comandos de gestión**: `/start`, `/help`, `/list`
+- 🌐 **Acceso externo** mediante túnel Ngrok sin abrir puertos en el router
+- 📱 **Todo desde el móvil** a través de Telegram
+
+---
+
+## 🏗️ Arquitectura del sistema
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Telegram  │────▶│     n8n     │────▶│   Groq IA   │────▶│  OpenHands  │────▶│   Docker    │
+│   (móvil)   │     │  (webhook)  │     │ (LLaMA 3.3) │     │  (deploy)   │     │ (containers)│
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+       │                   │                   │                   │                   │
+  Usuario envía       Recibe y               Genera           Despliega el        Contenedores
+   el mensaje        procesa la            compose.yml         entorno             corriendo
+                     petición               con YAML
+```
+
+### Flujo detallado
+
+1. **Usuario** → Escribe un mensaje en Telegram al bot `@dockerbot_sergio_bot`
+2. **Ngrok** → Expone el webhook de n8n a internet de forma segura
+3. **n8n** → Recibe el mensaje, detecta el tipo (comando o petición libre) mediante un nodo Switch
+4. **Groq IA** → Procesa la petición y genera un `docker-compose.yml` válido
+5. **OpenHands** → Ejecuta el compose generado y levanta los contenedores
+6. **Telegram** → El bot responde al usuario con el resultado
+
+---
+
+## 🛠️ Tecnologías utilizadas
+
+| Tecnología | Versión | Uso |
+|------------|---------|-----|
+| **Docker** | Latest | Contenedores y orquestación |
+| **docker-compose** | v3.8 | Definición de servicios |
+| **n8n** | Latest | Motor de automatización y flujos |
+| **Groq + LLaMA 3.3** | 70B | IA gratuita para generar YAMLs |
+| **OpenHands** | Main | Despliegue automático de entornos |
+| **Telegram Bot API** | v6+ | Interfaz de usuario móvil |
+| **Ngrok** | v3 | Túnel público para webhooks |
+
+---
+
+## 📁 Estructura del repositorio
+
+```
+docker-bot-proyecto/
+│
+├── 📄 docker-compose.yml        # Infraestructura principal (n8n + OpenHands)
+├── 📄 generated-compose.yml     # Ejemplo de compose generado por la IA
+├── 📄 My workflow.json          # Exportación del flujo de n8n
+├── 📄 nginx.conf                # Configuración de Nginx
+└── 📄 README.md                 # Este fichero
+```
+
+### Descripción de archivos
+
+**`docker-compose.yml`** — Define los servicios principales del proyecto:
+- `n8n`: Motor de automatización expuesto en el puerto `5678`
+- `openhands`: Agente de despliegue expuesto en el puerto `3000`
+- Red bridge `bot_network` para comunicación interna
+- Volúmenes para persistencia de datos
+
+**`My workflow.json`** — Exportación completa del flujo de n8n con todos los nodos configurados: Telegram Trigger, Switch, HTTP Request a Groq, Code in JavaScript y Send Message.
+
+---
+
+## ✅ Requisitos previos
+
+Antes de arrancar el proyecto necesitas tener instalado:
+
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Windows/Mac/Linux)
+- [Git](https://git-scm.com/)
+- [Ngrok](https://ngrok.com/) (cuenta gratuita)
+- Una cuenta en [Groq](https://console.groq.com/) para obtener la API key gratuita
+- Un bot de Telegram creado con [@BotFather](https://t.me/BotFather)
+
+---
+
+## 🚀 Instrucciones de arranque
+
+### 1. Clonar el repositorio
 
 ```bash
-# Instala dependencias
-pip install -r requirements.txt
-
-# Pon el credentials.json en esta carpeta y ejecuta:
-python generar_token.py
+git clone https://github.com/sergiopt07/docker-bot-proyecto.git
+cd docker-bot-proyecto
 ```
 
-Se abrirá el navegador para que autorices el acceso.
-Al terminar, se genera `token.json`. **Guarda su contenido**, lo necesitarás en el Paso 5.
+### 2. Configurar las variables de entorno
+
+Edita el fichero `docker-compose.yml` y actualiza estas variables:
+
+```yaml
+environment:
+  - N8N_BASIC_AUTH_USER=admin
+  - N8N_BASIC_AUTH_PASSWORD=admin123
+  - WEBHOOK_URL=https://TU-URL-DE-NGROK.ngrok-free.dev
+```
+
+### 3. Levantar los contenedores
+
+```bash
+docker compose up -d
+```
+
+Verifica que están corriendo:
+
+```bash
+docker ps
+```
+
+Deberías ver:
+
+```
+CONTAINER ID   IMAGE                              STATUS
+xxxxxxxxxxxx   n8nio/n8n                          Up X seconds   0.0.0.0:5678->5678/tcp   n8n
+xxxxxxxxxxxx   ghcr.io/all-hands-ai/openhands     Up X seconds   0.0.0.0:3000->3000/tcp   openhands
+```
+
+### 4. Iniciar el túnel Ngrok
+
+```bash
+ngrok http 5678
+```
+
+Copia la URL pública generada (ejemplo: `https://deception-tried-partake.ngrok-free.dev`) y actualízala en el `docker-compose.yml`.
+
+### 5. Configurar n8n
+
+1. Abre `http://localhost:5678` en el navegador
+2. Importa el fichero `My workflow.json`
+3. Configura las credenciales de Telegram con tu token de bot
+4. Configura las credenciales de Groq con tu API key
+5. Publica el workflow
+
+### 6. ¡Listo!
+
+Abre Telegram, busca tu bot y escribe `/start` para empezar. 🎉
 
 ---
 
-### PASO 4 — Subir el código a Railway
+## 💬 Uso del bot
 
-1. Ve a [railway.app](https://railway.app) y regístrate con GitHub
-2. Haz clic en **"New Project" → "Deploy from GitHub repo"**
-   - O crea un repo en GitHub, sube estos ficheros y conéctalo
-3. Railway detectará automáticamente el `requirements.txt`
+### Comandos disponibles
 
----
+| Comando | Descripción |
+|---------|-------------|
+| `/start` | Mensaje de bienvenida e introducción al bot |
+| `/help` | Lista completa de comandos disponibles |
+| `/list` | Ver todos los contenedores Docker activos |
 
-### PASO 5 — Configurar las variables de entorno en Railway
+### Ejemplos de peticiones
 
-En Railway, ve a tu proyecto → **Variables** y añade:
-
-| Variable | Valor |
-|----------|-------|
-| `TELEGRAM_TOKEN` | El token de @BotFather |
-| `YOUR_CHAT_ID` | Tu Chat ID numérico |
-| `TIMEZONE` | `Europe/Madrid` |
-| `TOKEN_JSON` | El contenido del `token.json` (todo el JSON) |
-
-⚠️ El `token.json` necesita un pequeño ajuste: en el `bot.py` ya está
-preparado para leerlo desde la variable de entorno. Solo copia el
-contenido completo del fichero como valor de `TOKEN_JSON`.
-
----
-
-### PASO 6 — ¡A funcionar!
-
-Railway desplegará el bot automáticamente.
-Busca tu bot en Telegram y escríbele `/start`.
-
----
-
-## 🔔 Alertas automáticas
-
-El bot revisa tu calendario cada día a las **9:00 AM** (hora de Madrid).
-Si encuentra algún evento exactamente **7 días después**, te manda una alerta:
+El bot entiende lenguaje natural. Puedes escribir cosas como:
 
 ```
-🔔 Recordatorio — 7 días
-
-📅 Concierto en el Teatro
-🕐 Sáb 15/06  20:00
-📍 Teatro Principal
-
-Quedan 7 días para este evento.
+"quiero un entorno con Nginx y MySQL"
+"dame un WordPress con base de datos"
+"necesito un servidor con Redis y Node.js"
+"crea un entorno con Python y PostgreSQL"
+"qué es un volumen en Docker?"
+"cómo paro un contenedor?"
 ```
 
 ---
 
-## 📁 Estructura del proyecto
+## 📊 Niveles del proyecto
+
+### 🟡 Nivel 1 — Aprobado (5-6 puntos)
+- ✅ `docker-compose.yml` con n8n y OpenHands en red bridge
+- ✅ Conexión a IA gratuita (Groq + LLaMA 3.3)
+- ✅ System prompt configurado para generar compose válidos
+- ✅ Repositorio en GitHub con README completo
+
+### 🔵 Nivel 2 — Notable (7-8 puntos)
+- ✅ Volúmenes configurados en todos los servicios
+- ✅ OpenHands despliega automáticamente el entorno generado
+- ✅ Contenedores corriendo tras cada petición
+
+### 🟢 Nivel 3 — Sobresaliente (9-10 puntos)
+- ✅ Bot de Telegram creado con BotFather e integrado en n8n
+- ✅ Túnel Ngrok para exponer el webhook sin abrir puertos
+- ✅ Comandos `/start`, `/help` y `/list` implementados
+- ✅ Conversación fluida sobre Docker en lenguaje natural
+
+---
+
+## 📸 Capturas del sistema
+
+### Flujo de n8n
+El workflow completo con todos los nodos conectados:
 
 ```
-telegram-calendar-bot/
-├── bot.py              # Bot principal
-├── google_calendar.py  # Conexión con Google Calendar API
-├── generar_token.py    # Script de autorización (solo 1 vez)
-├── requirements.txt    # Dependencias
-├── railway.toml        # Config para Railway
-└── README.md
+Telegram Trigger → Switch → /start → Send Message (bienvenida)
+                          → /help  → Send Message (ayuda)
+                          → /list  → Code JS → Send Message (contenedores)
+                          → texto  → HTTP Request (Groq) → Code JS → Send Message
 ```
+
+### Bot en Telegram
+El bot responde desde el móvil en tiempo real, sin necesidad de tocar ningún panel ni terminal.
+
+---
+
+<div align="center">
+
+**Sergio Pallarés Tejedor · Izan Asin Mazuque**
+
+*1º DAM — IES Océano Atlántico — 2025-2026*
+
+</div>
