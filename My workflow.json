@@ -1,0 +1,376 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.groq.com/openai/v1/chat/completions",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer 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"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"llama-3.3-70b-versatile\",\n  \"messages\": [\n    {\n      \"role\": \"system\",\n      \"content\": \"Eres DockerBot, un asistente experto en Docker y contenedores. Puedes mantener conversaciones fluidas sobre Docker, docker-compose, contenedores, redes, volúmenes y despliegues. Cuando el usuario te pida generar un entorno, responde ÚNICAMENTE con el fichero docker-compose.yml válido en YAML puro, sin explicaciones ni bloques markdown. Para cualquier otra pregunta sobre Docker, responde de forma clara, concisa y amigable en español. Si el usuario saluda o pregunta qué puedes hacer, explícale que puedes generar entornos Docker automáticamente y resolver dudas sobre Docker y contenedores.\"\n    },\n    {\n      \"role\": \"user\",\n      \"content\": \"={{ $json.message.text }}\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        304,
+        80
+      ],
+      "id": "b14029fe-e332-4885-8245-601a421bcbe4",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const compose = $input.first().json.choices[0].message.content;\nreturn [{ json: { compose: compose, status: 'generado' } }];;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        608,
+        80
+      ],
+      "id": "dc2ac484-7fb6-4ecf-aea4-944e4adf6d62",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -416,
+        -192
+      ],
+      "id": "c79709b4-5821-4de4-a3ec-3aa510f1a970",
+      "name": "Telegram Trigger",
+      "webhookId": "16167af7-1477-489e-8566-53efd14f2243",
+      "credentials": {
+        "telegramApi": {
+          "id": "fjzg7gJ47V4Ix92M",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $('Code in JavaScript').item.json.compose }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        80
+      ],
+      "id": "17f586b7-b3c5-4e1f-bb49-400e4e9cd0ca",
+      "name": "Send a text message",
+      "webhookId": "cdd058f9-2b15-4844-a051-f7b3978eab03",
+      "credentials": {
+        "telegramApi": {
+          "id": "fjzg7gJ47V4Ix92M",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "mensaje → texto",
+                    "rightValue": "/start",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "2bb60c8f-2ba5-4bdd-a7ac-a3eab4233cae"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "37a46f43-1f06-405d-b58a-5bae147d9696",
+                    "leftValue": "mensaje → texto",
+                    "rightValue": "/help",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "28e1d66e-8be7-4e88-8cf3-a34f1ada7ef5",
+                    "leftValue": "mensaje → texto",
+                    "rightValue": "/list",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "c2a485f1-209c-421a-9a93-228459aff68d",
+                    "leftValue": "mensaje → texto",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -144,
+        -224
+      ],
+      "id": "934c0396-5921-46cd-8391-81f28ba045dc",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "🐳 ¡Hola! Soy DockerBot creado por Sergio.  Puedo ayudarte a generar entornos Docker automáticamente con IA.  Escríbeme lo que necesitas, por ejemplo: \"quiero un entorno con Nginx y MySQL\"  Usa /help para ver todos los comandos disponibles.",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        304,
+        -496
+      ],
+      "id": "5645ee70-0dab-468b-ae99-ee3a332f177a",
+      "name": "Send a text message1",
+      "webhookId": "e8ec5916-24e9-4b6d-9373-aed6c9cb80bb",
+      "credentials": {
+        "telegramApi": {
+          "id": "fjzg7gJ47V4Ix92M",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "📋 Comandos disponibles:  /start — Mensaje de bienvenida /help — Lista de comandos /list — Ver contenedores activos /stop nombre — Detener un contenedor /remove nombre — Eliminar un contenedor  💬 O escríbeme directamente lo que necesitas: \"quiero un entorno con Nginx y MySQL\" \"dame un WordPress con base de datos\"",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        304,
+        -288
+      ],
+      "id": "f85d3348-bc27-459c-8adc-cbb737a4eea8",
+      "name": "Send a text message2",
+      "webhookId": "1d91198d-bdc1-4a63-a17c-b52db18203f0",
+      "credentials": {
+        "telegramApi": {
+          "id": "fjzg7gJ47V4Ix92M",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.message.chat.id }}",
+        "text": "={{ $json.message.chat.id }}",
+        "additionalFields": {
+          "parse_mode": "HTML"
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        608,
+        -80
+      ],
+      "id": "692b436b-a2da-4cc0-a68c-fc6d0c8afb08",
+      "name": "Send a text message3",
+      "webhookId": "3c897abf-39e7-41d9-b353-40d17c5b79bf",
+      "credentials": {
+        "telegramApi": {
+          "id": "fjzg7gJ47V4Ix92M",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const { execSync } = require('child_process');\ntry {\n  const output = execSync('docker ps --format \"{{.Names}} - {{.Status}}\"').toString().trim();\n  const texto = output ? '🐳 Contenedores activos:\\n\\n' + output : '⚠️ No hay contenedores activos.';\n  return [{ json: { containers: texto, message: $input.first().json.message } }];\n} catch(e) {\n  return [{ json: { containers: '❌ Error al obtener contenedores.', message: $input.first().json.message } }];\n}"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        304,
+        -80
+      ],
+      "id": "66c7ba13-2745-4303-9daa-25c1f3ee0e29",
+      "name": "Code in JavaScript1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "22b09ad1-bf16-4e8b-b277-a11cc88cb1b8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "21f971ae267ab4261a332b60ec485722ae764947921b1edd829f5bba74af0b5e"
+  },
+  "id": "xGAlDQ9XLSurWNgY",
+  "tags": []
+}
