@@ -255,7 +255,7 @@ El bot responde desde el móvil en tiempo real, sin necesidad de tocar ningún p
 
 <div align="center">
 
-**Sergio Pallarés Tejedor · Izan Asin Mazuque**
+**Sergio Pallarés Tejedor**
 
 *1º DAM — IES Océano Atlántico — 2025-2026*
 
